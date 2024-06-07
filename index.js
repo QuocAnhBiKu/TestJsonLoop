@@ -1,15 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {db} = require('./config')
+const { doc, getDoc, setDoc } = require('firebase/firestore');
 const cors = require('cors')
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-
-
-
-
 app.get('/options', async (req, res) => {
     try {
         const docRef = doc(db, 'options', 'data');
@@ -19,22 +16,23 @@ app.get('/options', async (req, res) => {
             const optionsData = docSnap.data().options;
             const subjects = Object.keys(optionsData);
             const chapters = {};
+            const questions = {};
 
             for (const subject in optionsData) {
                 chapters[subject] = Object.keys(optionsData[subject]);
-            }
-
-            // Lấy tất cả các câu hỏi từ dữ liệu options
-            const questions = {};
-            for (const subject in optionsData) {
                 questions[subject] = {};
                 for (const chapter in optionsData[subject]) {
-                    questions[subject][chapter] = Object.keys(optionsData[subject][chapter]);
+                    questions[subject][chapter] = {};
+                    for (const questionKey in optionsData[subject][chapter]) {
+                        const question = optionsData[subject][chapter][questionKey].question;
+                        questions[subject][chapter][questionKey] = question;
+                    }
                 }
             }
 
-            // Gửi dữ liệu về cho client bao gồm cả subjects, chapters và questions
-            res.json({ subjects, chapters, questions });
+            // Trả về dữ liệu theo định dạng yêu cầu
+            const formattedData = { subjects, chapters, questions };
+            res.json(formattedData);
         } else {
             res.status(404).json({ error: 'No such document!' });
         }
@@ -43,7 +41,6 @@ app.get('/options', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 // Endpoint để xử lý yêu cầu gửi câu trả lời
 app.post('/submit', async (req, res) => {
