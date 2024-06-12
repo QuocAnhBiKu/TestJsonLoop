@@ -1,63 +1,76 @@
+// Import Firestore from config.js
 const { db } = require('./config');
-const { doc, setDoc } = require('firebase/firestore');
+const { doc, setDoc, collection } = require('firebase/firestore');
 
-async function addData() {
-    const data = {
-        "options": {
-            "math": {
-                "chapter1": {
-                    "Câu hỏi 1": {
-                        "question": "Bài toán về phép cộng 2 + 2 bằng mấy?",
-                            "answer": "4"
-                    },
-                    "Câu hỏi 2": {
-                        "question": "Bài toán về phép nhân 3 x 4 bằng mấy?",
-                            "answer": "12"
-                    }
-                },
-                "chapter2": {
-                    "Câu hỏi 1": {
-                        "question": "Bài toán về phép trừ 5 - 3 bằng mấy?",
-                            "answer": "2"
-                    },
-                    "Câu hỏi 2": {
-                        "question": "Bài toán về phép chia 8 ÷ 2 bằng mấy?",
-                            "answer": "4"
-                    }
-                }
-            },
-            "literature": {
-                "chapter1": {
-                    "Câu hỏi 1": {
-                        "question": "Ai là tác giả của cuốn tiểu thuyết 'Vợ nhặt'?",
-                            "answer": "Kim Lân"
-                    },
-                    "Câu hỏi 2": {
-                        "question": "Trong tiểu thuyết 'Số đỏ', nhân vật nào làm 'Anh hùng lao động'?",
-                            "answer": "Văn Trịnh"
-                    }
-                },
-                "chapter2": {
-                    "Câu hỏi 1": {
-                        "question": "Cuốn sách nào được coi là 'Bí kíp thành công' của Dale Carnegie?",
-                            "answer": "Làm thế nào để thu bạn và ảnh hưởng đến người khác"
-                    },
-                    "Câu hỏi 2": {
-                        "question": "Cuốn sách 'Nhà giả kim' là tác phẩm của tác giả nào?",
-                            "answer": "Paulo Coelho"
-                    }
-                }
-            }
-        }
-
-};
-
-try {
-    await setDoc(doc(db, 'options', 'data'), data);
-    console.log('Data added successfully');
-} catch (error) {
-    console.error('Error adding document:', error);
-}
+// Function to add a course
+async function addCourse(courseId, courseName, description) {
+    const courseRef = doc(db, 'course', courseId);
+    await setDoc(courseRef, {
+        courseId: courseId,
+        courseName: courseName,
+        description: description
+    });
+    console.log(`Course ${courseId} added successfully.`);
 }
 
-addData();
+// Function to add a level to a course
+async function addLevel(courseId, levelId, levelName, description) {
+    const levelRef = doc(db, 'course', courseId, 'level', levelId);
+    await setDoc(levelRef, {
+        levelId: levelId,
+        levelName: levelName,
+        courseId: courseId,
+        description: description
+    });
+    console.log(`Level ${levelId} added successfully to course ${courseId}.`);
+}
+
+// Function to add a lesson to a level
+async function addLesson(courseId, levelId, lessonId, lessonName, content) {
+    const lessonRef = doc(db, 'course', courseId, 'level', levelId, 'lesson', lessonId);
+    await setDoc(lessonRef, {
+        lessonId: lessonId,
+        lessonName: lessonName,
+        courseId: courseId,
+        levelId: levelId,
+        content: content
+    });
+    console.log(`Lesson ${lessonId} added successfully to level ${levelId} in course ${courseId}.`);
+}
+
+// Example usage
+(async () => {
+    try {
+        // Add courses
+        await addCourse('course1', 'Math 101', 'Basic Mathematics');
+        await addCourse('course2', 'Physics 101', 'Basic Physics');
+
+        // Add levels to course1
+        await addLevel('course1', 'level1', 'Beginner', 'Introduction to basic concepts');
+        await addLevel('course1', 'level2', 'Intermediate', 'Intermediate concepts');
+
+        // Add lessons to course1 -> level1
+        await addLesson('course1', 'level1', 'lesson1', 'Addition', 'Learn how to add numbers');
+        await addLesson('course1', 'level1', 'lesson2', 'Subtraction', 'Learn how to subtract numbers');
+        await addLesson('course1', 'level1', 'lesson3', 'Multiplication', 'Learn how to multiply numbers');
+
+        // Add lessons to course1 -> level2
+        await addLesson('course1', 'level2', 'lesson1', 'Algebra', 'Learn basic algebra');
+        await addLesson('course1', 'level2', 'lesson2', 'Geometry', 'Learn basic geometry');
+        
+        // Add levels to course2
+        await addLevel('course2', 'level1', 'Beginner', 'Introduction to basic physics concepts');
+        await addLevel('course2', 'level2', 'Intermediate', 'Intermediate physics concepts');
+
+        // Add lessons to course2 -> level1
+        await addLesson('course2', 'level1', 'lesson1', 'Newton\'s Laws', 'Learn about Newton\'s laws of motion');
+        await addLesson('course2', 'level1', 'lesson2', 'Kinematics', 'Learn about the motion of objects');
+
+        // Add lessons to course2 -> level2
+        await addLesson('course2', 'level2', 'lesson1', 'Electricity', 'Learn about electricity');
+        await addLesson('course2', 'level2', 'lesson2', 'Magnetism', 'Learn about magnetism');
+
+    } catch (error) {
+        console.error("Error adding document: ", error);
+    }
+})();
